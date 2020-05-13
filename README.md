@@ -1,9 +1,10 @@
 # NIT_JSR_Result_Portal
 Tools used:
-Python: Language
-BeautifulSoup : for web scrapping
-Docker : to create image of api
-heroku: for deploying the image
+## Python: Language
+## BeautifulSoup : for web scrapping
+## Docker : to create image of api
+## heroku: for deploying the image
+## flask 
 
 A Restful api build in flask. Just enter your roll and get your result
 This api is developed to fetch results of NIT JSR Students.
