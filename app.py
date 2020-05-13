@@ -1,11 +1,20 @@
-import json
-import re
 import requests
 from pages.profile import ProfilePage
 from bs4 import BeautifulSoup
 from parsers.ProfileParcer import ProfileParser
 from parsers.ResultTableParser import ResultsTableParser
-from parsers.SubjectParser import  SubjectParser
+from parsers.SubjectParser import SubjectParser
+from flask import Flask, request, jsonify
+import json
+
+import os
+
+app = Flask("__name__")
+
+
+@app.route('/', methods=['POST'])
+def get_user():
+    return jsonify({'Developed by': "Rishabh Bhardwaj", 'status': 500})
 
 
 def getContent(roll_number):
@@ -24,7 +33,9 @@ def getContent(roll_number):
         return "invalid"
 
 
-def getBasicProfile(roll_number):
+@app.route('/api/profile', methods=['POST'])
+def getBasicProfile():
+    roll_number = request.json['roll']
     page = ProfilePage(getContent(roll_number))
     parsed = [ProfileParser(details).getDetails for details in page.getProfile]
     profile_list = [BeautifulSoup(str(item)).text for item in parsed[0]]
@@ -34,10 +45,12 @@ def getBasicProfile(roll_number):
         "branch": profile_list[2],
         "rank": profile_list[3]
     }
-    return profile_json
+    return jsonify(profile_json)
 
 
-def getCGPA(roll_number):
+@app.route('/api/cgpa', methods=['POST'])
+def getCGPA():
+    roll_number = request.json['roll']
     page = ProfilePage(getContent(roll_number))
     totalsems = []
     for table in page.getAllResultTables:
@@ -52,10 +65,13 @@ def getCGPA(roll_number):
                 "cgpa": status_list[1]
             }
             totalsems.append(status_json)
-    return totalsems
+    return jsonify(totalsems)
 
 
-def getSemesterResults(roll_number):
+@app.route('/api/results', methods=['POST'])
+def getSemesterResults():
+    roll_number = request.json['roll']
+
     page = ProfilePage(getContent(roll_number))
     semester_list = []
     for table in page.getAllResultTables:
@@ -64,7 +80,7 @@ def getSemesterResults(roll_number):
         sem_marks = []
         for subject in totalsubjects:
             subject_details_obj = SubjectParser(subject)
-            subject_details = [subject_detail.string for subject_detail in subject_details_obj.getSubjectDetails ]
+            subject_details = [subject_detail.string for subject_detail in subject_details_obj.getSubjectDetails]
             subject_details_json = {
                 "code": subject_details[0],
                 "name": subject_details[1],
@@ -79,14 +95,8 @@ def getSemesterResults(roll_number):
             sem_marks.append(subject_details_json)
         if sem_marks:
             semester_list.append(sem_marks)
-    return semester_list
+    return jsonify(semester_list)
 
 
-
-
-
-
-
-print(getBasicProfile('2018ugcs014'))
-print(getCGPA('2018ugcs014'))
-print(getSemesterResults('2018ugcs014'))
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=os.environ.get('PORT', '5000'), debug=True)
